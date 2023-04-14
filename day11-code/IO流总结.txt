@@ -1,0 +1,219 @@
+IO流介绍 :
+
+        I : input (输入 | 读取)
+        O : output (输出 | 写出)
+
+        作用: 数据传输
+
+---------------------------------------------------
+
+IO流的分类 :
+
+        1. 流向分
+                输入
+                输出
+
+        2. 类型分
+                字节流 : 万能流, 计算机中的数据都是字节.
+                字符流 : 读取纯文本文件内容, 解决乱码问题
+
+
+---------------------------------------------------
+
+IO流的体系结构 :
+
+        字节流 :
+
+                InputStream(抽象类) :
+
+                    FileInputStream : 字节输入流
+                    BufferedInputStream : 字节缓冲输入流 (提高读取效率: 内部隐藏了一个8192大小的字节数组)  -  鸡肋
+
+                    常用的方法 :
+
+                            public int read() : 一次读取一个字节, 读取到末尾返回-1
+                            public int read(byte[] bys) : 一次读取一个字节数组, 返回值是读取到的有效字节个数.
+                                                                    读取到末尾返回-1
+
+                            ------------------------------------------------------
+                            int i;
+                            while((i = fis.read()) != -1){
+                                // i : 读取到的每一个字节
+                            }
+
+                            byte[] bys = new byte[1024];
+                            int len;
+                            while((len = fis.read(bys)) != -1){
+                                // 注意: 数据在数组中
+                                // len: 读取到的有效字节个数
+                                // 通过String类的构造方法, 将读取到的字节, 转换为字符串
+                                String s = new String(bys, 0, len);
+                            }
+                            ------------------------------------------------------
+
+                OutputStream(抽象类) :
+
+                    注意: 如果写出数据要有追加效果, 需要在创建对象的时候, 构造方法第二个参数传入true
+
+                            new FileOutputStream("D:\\a.txt", true);
+                            new BufferedOutputStream(new FileOutputStream("D:\\a.txt", true));
+
+                    FileOutputStream : 字节输出流
+                    BufferedOutputStream : 字节缓冲输出流 (提高写出效率: 内部隐藏了一个8192大小的字节数组) -  鸡肋
+
+
+                    常用的方法 :
+                                public void write(int i) : 写出单个字节
+                                public void write(byte[] bys) : 写出一个字节数组
+                                public void write(byte[] bys, int offset, int len) : 写出一个字节数组的一部分
+                                public void close() : 关闭流释放资源
+
+
+
+        ==================================================================================================
+
+        字符流 : 字节流 + 编码表
+
+                读取的时候, 还是一个字节一个字节的读取
+                            1. 先读取第一个字节
+                            2. 看是否是负数, 负数的判断
+                                    是 : 说明正在读取的是中文, 根据编码表决定继续读取多少个字节
+                                                GBK : 2个, 转换
+                                                UTF-8 : 3个, 转换
+
+                                    不是 : 说明读取到的不是中文, 直接转换
+
+                Reader(字符输入流抽象父类) :
+
+                        InputStreamReader : 转换流(1. 将字节流转字符流   2. 按照指定的编码表读取)
+                                                new InputStreamReader(new FileInputStream("D:\\a.txt"), "GBK");
+
+                            FileReader : 按照平台默认编码表, 读取字符
+                                                new FileReader("D:\\a.txt");
+
+                        BufferedReader : 如果一次需要读取一整行
+                                                new BufferedReader(new FileReader("D:\\a.txt"));
+
+
+                        ---------------------------------------------------------------------
+                        常用的方法 :
+
+                                    public int read() : 一次读取一个字符
+                                    public int read(char[] chs) : 一次读取一个字符数组
+
+                                    BufferedReader : 特有方法
+
+                                            public String readLine() : 一次读取一行字符串
+                                                    注意: 如果读取到了末尾, 返回null
+
+                                            String line;
+
+                                            while((line = br.readLine()) != null){
+                                                // line : 读取到的每一行字符串
+                                            }
+                        ---------------------------------------------------------------------
+
+
+                Writer(字符输出流抽象父类) :
+
+                        OutputStreamWriter : 转换流(1. 将字节流转字符流  2. 按照指定的编码表写出)
+                                                new OutputStreamWriter(new FileOutputStream("D:\\a.txt"), "GBK");
+                                                new OutputStreamWriter(new FileOutputStream("D:\\a.txt", true), "GBK");
+
+                            FileWriter : 按照平台默认编码表, 写出字符
+                                                new FileWriter("D:\\a.txt");
+                                                new FileWriter("D:\\a.txt", true);
+
+                        BufferedWriter : 换行符需要考虑跨平台操作
+                                                new BufferedWriter(new FileWriter("D:\\a.txt"));
+                                                new BufferedWriter(new FileWriter("D:\\a.txt", true));
+
+                        ---------------------------------------------------------------------
+
+                        常用方法 :
+
+                                    public void write(int i) : 一次写出一个字符
+                                    public void write(char[] chs) : 一次写出一个字符数组
+                                    public void write(char[] chs, int offset, int len) : 一次写出一个字符数组的一部分
+                                    public void write(String s) : 一次写出一个字符串
+                                    public void write(String s,int offset, int len ) : 一次写出一个字符串的一部分
+
+
+                        重要的方法 :
+                                    public void flush() : 将字符流内置缓冲区(小数组)的数据, 刷出到文件, 刷出之后可以继续写出
+                                    public void close() : 关闭流释放资源, 在关闭之前, 检查缓冲区是否有数据
+                                                                                                - 顺带进行刷出操作
+                                                                                                - close()之后, 不能继续写出
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+功能流 :
+
+        1. 序列化流 : 将对象中的信息, 序列化到某一个文件
+                        大白话: 可以将对象中的信息, 保存到文件
+
+                        // 创建对象输入流, 关联文件
+                        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("D:\\a.txt"));
+
+                        // 读取对象
+                        Object o = ois.readObject();
+                        Student stu = (Student) ois.readObject();
+
+                        -----------------------------------------------------------------------------------------
+
+                        // 创建对象输出流, 关联文件
+                        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("D:\\a.txt"));
+
+                        注意事项:
+                             1. 对象所属的类, 必须实现序列化接口Serializable
+                             2. 实现了接口之后, 最好手动加入一个序列化版本号
+
+                                    private static final long serialVersionUID = 1L;
+
+                        建议:
+                             写出对象, 只写出一次, 读取的时候也只读取一次
+                             问题: 如果有多个对象需要写出, 存入一个集合, 再将集合整体写出去
+
+                        oos.writeObject(对象);
+
+                        瞬态关键字 : transient
+                                - 被其修饰的成员, 不会参与序列化操作了
+
+
+        2. 打印流
+
+                        PrintStream ps = new PrintStream("D:\\a.txt");
+                        ps.println(123);
+                        ps.println(12.3);
+                        ps.println("abc");
+
+
+Properties集合 (重点)
+
+        1. 作为集合的使用 (了解)
+
+                // 空集合
+                Properties prop = new Properties();
+
+        2. 从流中加载数据到集合
+
+                // 创建输入流, 关联要读取的文件
+                FileInputStream fis = new FileInputStream("config.properties");
+                // 从流中加载数据到集合
+                prop.load(fis);
+                fis.close();
+
+                // 从集合中, 根据键找值 !!!
+                String username = prop.getProperty("username");
+
+        3. 将集合中的数据保存到流中
+
+                FileOutputStream fos = new FileOutputStream("config.properties");
+
+                prop.store(fos, null);
+                prop.store(fos, "写注释");
+
+                fos.close();
